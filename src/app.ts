@@ -3,16 +3,17 @@ import { BOT_TOKEN } from "./auth.json"
 import { byeCommand } from "./commands/bye";
 import { helpCommand } from "./commands/help";
 import { hiCommand } from "./commands/hi";
-import { pingCommand } from "./commands/ping";
 import { playCommand } from "./commands/play";
 import { searchCommand } from "./commands/search";
 import { createChannelCommand } from "./commands/createchannel";
 import { sendWarning, delay } from "./utils";
 
+import * as ping from './services/ping';
+
 const bot = new Client(
-    { 
+    {
         intents: [
-            Intents.FLAGS.GUILDS, 
+            Intents.FLAGS.GUILDS,
             Intents.FLAGS.GUILD_MESSAGES,
             Intents.FLAGS.GUILD_VOICE_STATES
         ]
@@ -21,8 +22,10 @@ const bot = new Client(
 
 bot.once("ready", () => {
     console.log("BitJam is ready!");
-    bot.user!.setPresence({ activities: [{ type: 'LISTENING', name: ">>help" }], status: "online" });
+    bot.user!.setPresence({activities: [{type: 'LISTENING', name: ">>help"}], status: "online"});
 });
+
+ping.subscribeBotEvents(bot);
 
 bot.on("messageCreate", async message => {
     if (message.author.bot) return;
@@ -34,13 +37,13 @@ bot.on("messageCreate", async message => {
     }
 
     // '>>ping': Receive the response time of the bot
-    else if (message.content.match(/^>>ping/)) {
-        await pingCommand(bot.ws.ping, message);
-        return;
-    }
+    // else if (message.content.match(/^>>ping/)) {
+    //     await pingCommand(bot.ws.ping, message);
+    //     return;
+    // }
 
     // '>>channel': Creates a channel to directly search for songs
-    else if (message.content.match(/^>>channel/)) {        
+    else if (message.content.match(/^>>channel/)) {
         await createChannelCommand(bot, message);
         return;
     }
@@ -51,8 +54,7 @@ bot.on("messageCreate", async message => {
         || message.content.match(/^>>play\s.+/)
         || message.content.match(/^>>hi/)
         || message.content.match(/^>>bye/)
-    )
-    {
+    ) {
         if (!message.member!.voice.channel) {
             await message.react("❌").catch();
             const warning = await sendWarning("You must be in a voice channel to use this command!", message.channel);
